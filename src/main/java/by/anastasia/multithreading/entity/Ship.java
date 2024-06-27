@@ -7,27 +7,14 @@ import org.apache.logging.log4j.Logger;
 public class Ship extends Thread {
     private static final Logger LOGGER = LogManager.getLogger();
     private long id;
-    private int maxCapacity;
-    private Task task;
-    private Status status;
+    private ShipTask shipTask;
+    private ShipCondition shipCondition;
 
-    public enum Task {
-        LOAD,
-        UNLOAD,
-        LOAD_UNLOAD
-    }
 
-    public enum Status {
-        WAITING,
-        PROCESSING,
-        FINISHED
-    }
-
-    public Ship(int maxCapacity, Task task) {
-        this.id = ShipIdGenerator.generateId();
-        this.maxCapacity = maxCapacity;
-        this.task = task;
-        this.status = Status.WAITING;
+    public Ship(ShipTask shipTask) {
+        this.id = ShipIdGenerator.getInstance().generateId();
+        this.shipTask = shipTask;
+        this.shipCondition = ShipCondition.FREE;
     }
 
     @Override
@@ -35,32 +22,37 @@ public class Ship extends Thread {
         return id;
     }
 
-    public int getMaxCapacity() {
-        return maxCapacity;
+    public ShipTask getTask() {
+        return shipTask;
     }
 
-    public void setMaxCapacity(int maxCapacity) {
-        this.maxCapacity = maxCapacity;
+    public void setTask(ShipTask shipTask) {
+        this.shipTask = shipTask;
     }
 
-    public Task getTask() {
-        return task;
+    public ShipCondition getCondition() {
+        return shipCondition;
     }
 
-    public void setTask(Task task) {
-        this.task = task;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setCondition(ShipCondition shipCondition) {
+        this.shipCondition = shipCondition;
     }
 
     @Override
     public void run() {
+        PortWarehouse port = PortWarehouse.getInstance();
+        Pier pier = port.getPier();
+        pier.process(this);
+
+        if (shipTask == ShipTask.LOAD) {
+            port.removeFromStorage();
+        } else if (shipTask == ShipTask.UNLOAD) {
+            port.addToStorage();
+        } else if (shipTask == ShipTask.LOAD_UNLOAD) {
+            port.removeFromStorage();
+            port.addToStorage();
+        }
+        port.releasePier(pier);
     }
 
     @Override
@@ -71,27 +63,25 @@ public class Ship extends Thread {
         Ship ship = (Ship) o;
 
         if (id != ship.id) return false;
-        if (maxCapacity != ship.maxCapacity) return false;
-        if (task != ship.task) return false;
-        return status == ship.status;
+        if (shipTask != ship.shipTask) return false;
+        return shipCondition == ship.shipCondition;
     }
 
     @Override
     public int hashCode() {
         int result = (int) (id ^ (id >>> 32));
-        result = 31 * result + maxCapacity;
-        result = 31 * result + (task != null ? task.hashCode() : 0);
-        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (shipTask != null ? shipTask.hashCode() : 0);
+        result = 31 * result + (shipCondition != null ? shipCondition.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        StringBuilder stringBuilder = new StringBuilder("Ship: ");
-        stringBuilder.append("id = ").append(id).append(", ");
-        stringBuilder.append("maxCapacity = ").append(maxCapacity).append(", ");
-        stringBuilder.append("task = ").append(task);
-
-        return stringBuilder.toString();
+        final StringBuilder sb = new StringBuilder("Ship{");
+        sb.append("id=").append(id);
+        sb.append(", shipTask=").append(shipTask);
+        sb.append(", shipCondition=").append(shipCondition);
+        sb.append('}');
+        return sb.toString();
     }
 }
