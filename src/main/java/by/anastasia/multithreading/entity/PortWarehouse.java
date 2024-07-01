@@ -24,12 +24,10 @@ public class PortWarehouse {
     private final Lock pierLock = new ReentrantLock();
     private static final Queue<Condition> conditions = new ArrayDeque<>();
     private final AtomicInteger storage = new AtomicInteger(0);
-    private static final int DEFAULT_PIERS_COUNT = 1;
+    private static final int DEFAULT_PIERS_COUNT = 5;
 
     private PortWarehouse() {
-        for (int i = 0; i < DEFAULT_PIERS_COUNT; i++) {
-            pierPool.add(new Pier());
-        }
+        fillPort();
     }
 
     public static PortWarehouse getInstance() {
@@ -75,6 +73,12 @@ public class PortWarehouse {
             return finishedPiers.remove(pier);
         } finally {
             pierLock.unlock();
+        }
+    }
+
+    private void fillPort() {
+        for (int i = 0; i < DEFAULT_PIERS_COUNT; i++) {
+            pierPool.add(new Pier());
         }
     }
 

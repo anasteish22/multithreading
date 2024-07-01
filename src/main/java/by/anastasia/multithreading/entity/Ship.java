@@ -5,7 +5,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class Ship extends Thread {
-    private static final Logger LOGGER = LogManager.getLogger();
     private long id;
     private ShipTask shipTask;
     private ShipCondition shipCondition;
